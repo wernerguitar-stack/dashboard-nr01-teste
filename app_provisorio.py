@@ -56,7 +56,7 @@ try:
     col_data = df_completo.columns[0]
     col_cnpj = df_completo.columns[1] # Segunda coluna da planilha
     
-    # FORÇAR FORMATO DE DATA NO DATAFRAME COMPLETO
+    # Forçar formato de data no DataFrame completo
     if col_data in df_completo.columns:
         df_completo[col_data] = pd.to_datetime(df_completo[col_data], errors='coerce')
     
@@ -131,7 +131,6 @@ try:
     col_d1.metric(label="Total de Questionários", value=len(df_original))
     
     if not df_original[col_data].isna().all():
-        # Formata explicitamente as datas para strings no layout brasileiro
         data_inicio = df_original[col_data].min().strftime('%d/%m/%Y')
         data_fim = df_original[col_data].max().strftime('%d/%m/%Y')
         col_d2.metric(label="📅 Início da Pesquisa", value=data_inicio)
@@ -184,4 +183,214 @@ try:
     dimensoes = {
         "Demandas de Trabalho": colunas_perguntas[0:5],
         "Controle sobre o Trabalho": colunas_perguntas[5:10],
-        "Suporte Social no Trabalho": colunas_perguntas
+        "Suporte Social no Trabalho": colunas_perguntas[10:15],
+        "Relações Interpessoais e Liderança": colunas_perguntas[15:20],
+        "Reconhecimento e Recompensas": colunas_perguntas[20:25],
+        "Danos Morais e Assedio": colunas_perguntas[25:30],
+        "Equilibrio Trabalho - Vida Pessoal": colunas_perguntas[30:35],
+        "Insegurança no Trabalho": colunas_perguntas[35:40]
+    }
+    
+    chaves_dim = list(dimensoes.keys())
+    
+    # Linha 1 (Dimensões 1 a 4)
+    cols_linha1 = st.columns(4)
+    for idx in range(4):
+        nome_dim = chaves_dim[idx]
+        cols_dim = dimensoes[nome_dim]
+        df_sub = df_perguntas[cols_dim]
+        media_dim = df_sub.mean().mean()
+        
+        r_nome, r_cor, r_emoji = obter_classificacao_risco(media_dim)
+        
+        with cols_linha1[idx]:
+            st.markdown(f"##### {nome_dim}")
+            st.markdown(f"<span style='color:{r_cor}; font-weight:bold;'>{r_emoji} {r_nome} ({media_dim:.2f})</span>", unsafe_allow_html=True)
+            
+            df_mini = df_sub.mean().reset_index()
+            df_mini.columns = ['Item', 'Média']
+            st.bar_chart(data=df_mini, x='Item', y='Média', color=r_cor)
+            st.markdown("<br>", unsafe_allow_html=True)
+
+    # Linha 2 (Dimensões 5 a 8)
+    cols_linha2 = st.columns(4)
+    for idx in range(4, 8):
+        nome_dim = chaves_dim[idx]
+        cols_dim = dimensoes[nome_dim]
+        df_sub = df_perguntas[cols_dim]
+        media_dim = df_sub.mean().mean()
+        
+        r_nome, r_cor, r_emoji = obter_classificacao_risco(media_dim)
+        
+        with cols_linha2[idx - 4]:
+            st.markdown(f"##### {nome_dim}")
+            st.markdown(f"<span style='color:{r_cor}; font-weight:bold;'>{r_emoji} {r_nome} ({media_dim:.2f})</span>", unsafe_allow_html=True)
+            
+            df_mini = df_sub.mean().reset_index()
+            df_mini.columns = ['Item', 'Média']
+            st.bar_chart(data=df_mini, x='Item', y='Média', color=r_cor)
+            st.markdown("<br>", unsafe_allow_html=True)
+
+    st.markdown("---")
+
+    # =========================================================================
+    # INSERÇÃO DO TEXTO METODOLÓGICO LONGO
+    # =========================================================================
+    st.subheader("📝 Fundamentação e Metodologia do Diagnóstico")
+    
+    st.markdown("""
+    Quanto à identificação dos fatores psicossociais relacionados ao trabalho, utilizamos a metodologia baseada na ferramenta internacionalmente reconhecida **Copenhagen Psychosocial Questionnaire (COPSOQ II)**, em versão adaptada de 40 itens, aplicada por meio de plataforma digital especializada, para coleta de informações junto aos trabalhadores.
+
+    #### ⚖️ Fundamentação Legal
+    A **Portaria MTE nº 1.419/2024** atualizou o Capítulo 1.5 da **NR-01**, incluindo os *Fatores Psicossociais Relacionados ao Trabalho (FRPRT)* no processo de gestão de riscos, em conformidade com a **NR-17**. Os trechos a seguir destacam essa exigência:
+    * **Item 1.5.3.1.4:** *"O gerenciamento de riscos deve abranger agentes físicos, químicos, biológicos, riscos de acidentes e fatores ergonômicos, incluindo os fatores psicossociais."*
+    * **Item 1.5.3.2.1:** *"As condições de trabalho, nos termos da NR-17, devem incluir os fatores psicossociais."*
+    * **Item 1.5.4.4.5.3:** *"A avaliação de riscos ergonômicos, incluindo psicossociais, deve considerar as exigências da atividade e a eficácia das medidas de prevenção."*
+
+    #### 🔬 Metodologia de Identificação
+    O método aplicado tem como objetivo identificar possíveis situações estressoras no ambiente de trabalho, por meio da coleta estruturada de informações junto à empresa, aos trabalhadores e de visitas de campo. 
+    
+    O **COPSOQ II** é um instrumento multidimensional com consenso internacional quanto à sua validade, abrangência e aplicabilidade na avaliação de riscos psicossociais em contexto laboral. A versão adaptada utilizada nesta metodologia contempla 40 itens, derivados da versão curta do COPSOQ II, organizados em múltiplas dimensões que abrangem:
+    1. Demandas de Trabalho
+    2. Controle sobre o Trabalho
+    3. Suporte Social no Trabalho
+    4. Relações Interpessoais e Liderança
+    5. Reconhecimento e Recompensas
+    6. Danos Morais e Assedio
+    7. Equilibrio Trabalho
+    8. Insegurança no Trabalho
+    
+    *Todos os itens são avaliados em escala Likert de 5 pontos.*
+
+    #### 📊 Critérios de Interpretação dos Resultados
+    O instrumento segue uma escala de resposta estruturada in níveis de frequência, variando de **1 a 5**, onde:
+    * **1** representa *"Nunca"*
+    * **2** representa *"Raramente"*
+    * **3** representa *"Às vezes"*
+    * **4** representa *"Frequentemente"*
+    * **5** representa *"Sempre"*
+
+    Essa metodologia permite quantificar percepções subjetivas de forma padronizada, possibilitando análise comparativa entre indivíduos, equipes e dimensões organizacionais. A tabulação é realizada por meio do cálculo de médias aritméticas simples, tanto no nível geral quanto por dimensões específicas do ambiente de trabalho.
+    
+    A classificação de risco é derivada da média obtida, sendo categorizada em níveis progressivos de criticidade:
+    """)
+
+    # Tabela Visual dos Critérios
+    st.markdown("""
+    | Média Obtida | Classificação de Risco | Nível de Criticidade |
+    | :--- | :--- | :--- |
+    | 🟢 **≤ 1.99** | **IRRELEVANTE** | Exposição insignificante a estressores |
+    | 🟢 **2.00 a 2.99** | **BAIXO** | Situação sob controle e estável |
+    | 🟡 **3.00 a 3.99** | **MÉDIO** | Alerta; requer atenção a médio prazo |
+    | 🔴 **4.00 a 4.50** | **ALTO** | Crítico; exige intervenção programada |
+    | 🚨 **> 4.50** | **CRÍTICO** | Extremo; exige ação imediata de contenção |
+    """)
+
+    st.markdown("""
+    #### 👥 Procedimento de Aplicação e Amostragem
+    O questionário é aplicado ao conjunto de funcionários da organização, **sem identificação de setor ou função**. Essa opção metodológica fundamenta-se em três razões de ordem prática e ética:
+    * **Preservação efetiva do anonimato:** Em setores com reduzido número de colaboradores, a associação entre cargo e resposta tornaria inevitável a identificação do respondente, comprometendo a integridade ética do processo.
+    * **Fidedignidade dos dados coletados:** O preenchimento de informações ocupacionais é fonte recurrentemente de erros sistemáticos, como classificação incorreta de setor ou função, que comprometem a qualidade da tabulação.
+    * **Conformidade normativa:** A NR-01 não determina a segmentação por setor como requisito obrigatório para a avaliação dos fatores psicossociais, sendo a avaliação institucional do perfil de risco igualmente válida para fins de gestão e composição do PGR.
+
+    > ⚠️ **Adesão Mínima:** Deverá ser alcançado um índice mínimo de **70% de adesão** do quadro total de funcionários para que os resultados sejam considerados representativos. Caso esse percentual não seja atingido, recomenda-se nova rodada de aplicação. As respostas são estritamente anônimas e confidenciais.
+
+    #### 📂 Análise e Inserção no PGR
+    Após a fase de coleta, o profissional deverá utilizar os relatórios gerados pela plataforma de aplicação do COPSOQ II para identificar a presença e o nível de exposição aos fatores de risco psicossociais. Na sequência, será realizado o anexo dos resultados dos fatores de risco ergonômicos psicossociais diretamente no **PGR (Programa de Gerenciamento de Riscos)**.
+
+    #### 📅 Vigência
+    A metodologia de avaliação será implementada em acompanhamento à atualização da nova redação da NR-01, que entrará em vigor em **26 de maio de 2026**.
+    
+    ---
+    *ID de Controle Emissor: SSOCIAL MEDCURITIBA-V2026*
+    """)
+    st.markdown("<br>", unsafe_allow_html=True)
+    # =========================================================================
+
+    # --- Exibição Condicional de Textos/Planos de Ação ---
+    if "Baixo" in nome_risco:
+        st.subheader("📋 Plano de Ação Sugerido - Grau de Risco Baixo")
+        st.info("""
+1. **Demandas de Trabalho** (Carga de trabalho, prazos, volume e urgências)  
+- Treinamentos voltados à gestão do tempo, organização de tarefas, produtividade saudável e prevenção de sobrecarga ocupacional.
+
+2. **Controle sobre o Trabalho** (Autonomia, participação e organização das atividades)  
+- Treinamentos voltados à autogestão, autonomia funcional e organização da rotina de trabalho.
+
+3. **Suporte Social no Trabalho** (Apoio entre equipes, cooperação e integração)  
+- Treinamentos sobre relações interpessoais, integração e fortalecimento do trabalho em equipe.
+
+4. **Relações Interpessoais e Liderança** (Comunicação, feedback e gestão de conflitos)  
+- Treinamentos sobre comunicação assertiva, inteligência emocional e relacionamento interpessoal.
+
+5. **Reconhecimento e Recompensas** (Valorização profissional e percepção de reconhecimento)  
+- Treinamentos sobre cultura organizacional, reconhecimento profissional e valorização das equipes.
+
+6. **Danos Morais e Assédio** (Condutas inadequadas, constrangimentos e ambiente ético)  
+- Treinamentos sobre ética, respeito interpessoal e prevenção ao assédio moral e sexual.
+
+7. **Equilíbrio Trabalho–Vida Pessoal** (Rotina, pausas e qualidade de vida)  
+- Treinamentos sobre gestão do tempo, qualidade de vida, saúde mental e limites saudáveis no ambiente de trabalho.
+
+8. **Insegurança no Trabalho** (Incertezas, estabilidade e mudanças organizacionais)  
+- Treinamentos sobre adaptação a mudanças organizacionais e comunicação corporativa.
+""")
+
+    elif "Médio" in nome_risco:
+        st.subheader("📋 Plano de Ação Sugerido - Grau de Risco Médio")
+        st.info("""
+1. **Demandas de Trabalho** (Carga de trabalho, prazos, volume e urgências)  
+- Treinamentos específicos sobre gestão de demandas, organization operacional, priorização de atividades e prevenção do estresse relacionado ao trabalho.
+
+2. **Controle sobre o Trabalho** (Autonomia, participação e organização das atividades)  
+- Treinamentos específicos sobre autonomia, clareza de função, organização operacional e melhoria dos processos internos.
+
+3. **Suporte Social no Trabalho** (Apoio entre equipes, cooperação e integração)  
+- Treinamentos voltados à comunicação interna, cooperação entre equipes e fortalecimento do suporte social no ambiente de trabalho.
+
+4. **Relações Interpessoais e Liderança** (Comunicação, feedback e gestão de conflitos)  
+- Treinamentos específicos para liderança e equipes sobre feedback, alinhamento de comunicação, prevenção de conflitos e fortalecimento das relações profissionais.
+
+5. **Reconhecimento e Recompensas** (Valorização profissional e percepção de reconhecimento)  
+- Treinamentos direcionados às lideranças sobre práticas de reconhecimento, valorização profissional e retenção de talentos.
+
+6. **Danos Morais e Assédio** (Condutas inadequadas, constrangimentos e ambiente ético)  
+- Treinamentos específicos sobre políticas internas, prevenção ao assédio, comunicação ética e fortalecimento das boas práticas organizacionais.
+
+7. **Equilíbrio Trabalho–Vida Pessoal** (Rotina, pausas e qualidade de vida)  
+- Treinamentos educativos sobre equilíbrio ocupacional, prevenção do desgaste emocional e incentivo a práticas saudáveis relacionadas ao bem-estar.
+
+8. **Insegurança no Trabalho** (Incertezas, estabilidade e mudanças organizacionais)  
+- Treinamentos voltados à transparência organizacional, alinhamento de expectativas profissionais e fortalecimento da comunicação interna.
+""")
+
+    elif "Alto" in nome_risco:
+        st.subheader("📋 Plano de Ação Sugerido - Grau de Risco Alto")
+        st.info("""
+1. **Demandas de Trabalho** (Carga de trabalho, prazos, volume e urgências)  
+- Necessidade de acompanhamento mais próximo e estruturado, com mentoria presencial para liderança, reorganização operacional, redistribuição de demandas e desenvolvimento de estratégias práticas de redução do risco psicossocial.
+
+2. **Controle sobre o Trabalho** (Autonomia, participação e organização das atividades)  
+- Necessidade de mentoria presencial para liderança e reestruturação organizacional, visando fortalecimento da autonomia funcional, alinhamento de funções e melhoria dos processos internos.
+
+3. **Suporte Social no Trabalho** (Apoio entre equipes, cooperação e integração)  
+- Necessidade de workshops e mentoria presencial voltados à melhoria da comunicação interpessoal, fortalecimento da cultura colaborativa e desenvolvimento das equipes.
+
+4. **Relações Interpessoais e Liderança** (Comunicação, feedback e gestão de conflitos)  
+- Necessidade de mentoria presencial para liderança, gestão de conflitos, fortalecimento de engajamento e melhoria das relações interpessoais no ambiente organizacional.
+
+5. **Reconhecimento e Recompensas** (Valorização profissional e percepção de reconhecimento)  
+- Necessidade de mentoria presencial para implementação de estratégias de reconhecimento, fortalecimento da motivação organizacional e retenção de talentos.
+
+6. **Danos Morais e Assédio** (Condutas inadequadas, constrangimentos e ambiente ético)  
+- Necessidade de palestras, acompanhamento presencial, fortalecimento de canais internos e mentoria especializada para prevenção e manejo das situações identificadas.
+
+7. **Equilíbrio Trabalho–Vida Pessoal** (Rotina, pausas e qualidade de vida)  
+- Necessidade de workshops presenciais, acompanhamento especializado e mentoria voltada ao manejo emocional, prevenção do adoecimento ocupacional e fortalecimento do bem-estar no ambiente de trabalho.
+
+8. **Insegurança no Trabalho** (Incertezas, estabilidade e mudanças organizacionais)  
+- Necessidade de mentoria presencial para liderança, alinhamento organizacional, fortalecimento da segurança psicológica e acompanhamento estruturado das mudanças organizacionais.
+""")
+
+except Exception as e:
+    st.error(f"Erro ao processar o diagnóstico: {e}")
